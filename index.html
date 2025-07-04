@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Budget Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.7.0/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="#dashboard" class="nav-link" id="nav-dashboard"><i class="fas fa-chart-bar"></i> Dashboard</a>
+        <a href="#add" class="nav-link" id="nav-add"><i class="fas fa-plus"></i> Add Transaction</a>
+        <a href="#history" class="nav-link" id="nav-history"><i class="fas fa-list"></i> History</a>
+        <a href="#reports" class="nav-link" id="nav-reports"><i class="fas fa-file-pdf"></i> Reports</a>
+        <button id="dark-mode-toggle" title="Toggle dark mode"><i class="fas fa-moon"></i></button>
+        <!-- User profile will be injected here by JS -->
+    </nav>
+    <main id="spa-main">
+        <!-- Login Section -->
+        <section id="login-section" class="spa-section">
+            <div class="login-container">
+                <div class="login-avatar"><i class="fas fa-user"></i></div>
+                <h2>Login</h2>
+                <form class="login-form" id="login-form">
+                    <input type="text" id="login-username" placeholder="Username" required>
+                    <input type="password" id="login-password" placeholder="Password" required>
+                    <button type="submit" class="login-btn">Login</button>
+                </form>
+                <div class="login-links">
+                    <a href="#register" id="to-register">Sign Up</a> |
+                    <a href="#reset" id="to-reset">Forgot Password?</a>
+                </div>
+            </div>
+        </section>
+        <!-- Register Section -->
+        <section id="register-section" class="spa-section" style="display:none;">
+            <div class="login-container">
+                <div class="login-avatar"><i class="fas fa-user-plus"></i></div>
+                <h2>Sign Up</h2>
+                <form class="login-form" id="register-form">
+                    <input type="text" id="register-username" placeholder="Username" required>
+                    <input type="password" id="register-password" placeholder="Password" required>
+                    <input type="password" id="register-confirm" placeholder="Confirm Password" required>
+                    <button type="submit" class="login-btn">Register</button>
+                </form>
+                <div class="login-links">
+                    <a href="#login" id="to-login-from-register">Already have an account? Login</a>
+                </div>
+            </div>
+        </section>
+        <!-- Password Reset Section -->
+        <section id="reset-section" class="spa-section" style="display:none;">
+            <div class="login-container">
+                <div class="login-avatar"><i class="fas fa-unlock-alt"></i></div>
+                <h2>Reset Password</h2>
+                <form class="login-form" id="reset-form">
+                    <input type="text" id="reset-username" placeholder="Username" required>
+                    <input type="password" id="reset-password" placeholder="New Password" required>
+                    <input type="password" id="reset-confirm" placeholder="Confirm New Password" required>
+                    <button type="submit" class="login-btn">Reset Password</button>
+                </form>
+                <div class="login-links">
+                    <a href="#login" id="to-login-from-reset">Back to Login</a>
+                </div>
+            </div>
+        </section>
+        <!-- Dashboard Section -->
+        <section id="dashboard-section" class="spa-section" style="display:none;">
+            <div class="dashboard-main-container">
+                <header class="dashboard-header">
+                    <div class="header-icon">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                    <h1>Budget Tracker</h1>
+                    <p class="subtitle">Take control of your finances with modern tracking</p>
+                </header>
+                <div class="dashboard-grid">
+                    <div class="dashboard-card balance-card">
+                        <div class="card-header">
+                            <h4>Total Balance</h4>
+                            <i class="fas fa-wallet"></i>
+                        </div>
+                        <div id="dashboard-balance" class="card-value">$0.00</div>
+                    </div>
+                    <div class="dashboard-card income-card">
+                        <div class="card-header">
+                            <h4>Total Income</h4>
+                            <i class="fas fa-trending-up"></i>
+                        </div>
+                        <div id="dashboard-income" class="card-value">$0.00</div>
+                    </div>
+                    <div class="dashboard-card expense-card">
+                        <div class="card-header">
+                            <h4>Total Expense</h4>
+                            <i class="fas fa-trending-down"></i>
+                        </div>
+                        <div id="dashboard-expense" class="card-value">$0.00</div>
+                    </div>
+                    <div class="dashboard-card transactions-card">
+                        <div class="card-header">
+                            <h4>Transactions</h4>
+                            <i class="fas fa-receipt"></i>
+                        </div>
+                        <div id="dashboard-count" class="card-value">0</div>
+                    </div>
+                </div>
+                <div class="dashboard-charts-row">
+                    <div class="chart-section">
+                        <h3><i class="fas fa-chart-bar"></i> Recent Transactions</h3>
+                        <canvas id="barChart" height="120"></canvas>
+                    </div>
+                    <div class="summary-section">
+                        <h3>Income vs Expenses</h3>
+                        <div class="summary-cards">
+                            <div class="summary-card income-summary">
+                                <div class="summary-header">
+                                    <h4>Income</h4>
+                                    <i class="fas fa-trending-up"></i>
+                                </div>
+                                <p id="income-summary" class="summary-amount">$0.00</p>
+                            </div>
+                            <div class="summary-card expense-summary">
+                                <div class="summary-header">
+                                    <h4>Expense</h4>
+                                    <i class="fas fa-trending-down"></i>
+                                </div>
+                                <p id="expense-summary" class="summary-amount">$0.00</p>
+                            </div>
+                        </div>
+                        <div class="net-balance">
+                            <p class="balance-label">Net Balance</p>
+                            <p id="net-balance" class="balance-value">$0.00</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- Add Transaction Section -->
+        <section id="add-section" class="spa-section" style="display:none;">
+            <div class="container">
+                <div class="header">
+                    <div class="header-icon">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                    <h1>Add Transaction</h1>
+                    <p class="subtitle">Add your income or expense below</p>
+                </div>
+                <div class="form-section">
+                    <div class="form-toggle-buttons">
+                        <button id="income-btn" class="add-btn income-toggle" type="button">
+                            <i class="fas fa-plus"></i> Add Income
+                        </button>
+                        <button id="expense-btn" class="add-btn expense-toggle" type="button">
+                            <i class="fas fa-minus"></i> Add Expense
+                        </button>
+                    </div>
+                    <form id="income-form" class="transaction-form" style="display:none;">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="income-text">Description</label>
+                                <input type="text" id="income-text" placeholder="Enter income description" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="income-amount">Amount</label>
+                                <div class="input-currency-row">
+                                    <input type="number" id="income-amount" step="0.01" min="0.01" placeholder="Enter amount (positive)" required>
+                                    <select id="income-currency" class="currency-select-inline">
+                                        <option value="USD">$ USD</option>
+                                        <option value="EUR">€ EUR</option>
+                                        <option value="GBP">£ GBP</option>
+                                        <option value="INR">₹ INR</option>
+                                        <option value="JPY">¥ JPY</option>
+                                        <option value="CAD">$ CAD</option>
+                                        <option value="AUD">$ AUD</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="add-btn income-btn">
+                            <i class="fas fa-plus"></i> Add Income
+                        </button>
+                    </form>
+                    <form id="expense-form" class="transaction-form" style="display:none;">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="expense-text">Description</label>
+                                <input type="text" id="expense-text" placeholder="Enter expense description" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="expense-amount">Amount</label>
+                                <div class="input-currency-row">
+                                    <input type="number" id="expense-amount" step="0.01" min="0.01" placeholder="Enter amount (positive)" required>
+                                    <select id="expense-currency" class="currency-select-inline">
+                                        <option value="USD">$ USD</option>
+                                        <option value="EUR">€ EUR</option>
+                                        <option value="GBP">£ GBP</option>
+                                        <option value="INR">₹ INR</option>
+                                        <option value="JPY">¥ JPY</option>
+                                        <option value="CAD">$ CAD</option>
+                                        <option value="AUD">$ AUD</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="add-btn expense-btn">
+                            <i class="fas fa-minus"></i> Add Expense
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+        <!-- History Section -->
+        <section id="history-section" class="spa-section" style="display:none;">
+            <div class="container">
+                <div class="header">
+                    <div class="header-icon">
+                        <i class="fas fa-list"></i>
+                    </div>
+                    <h1>Transaction History</h1>
+                    <p class="subtitle">See all your past transactions</p>
+                </div>
+                <ul id="list" class="transaction-list"></ul>
+                <div id="empty-state" style="display:none;">No transactions yet. Add one to get started!</div>
+            </div>
+        </section>
+        <!-- Reports Section -->
+        <section id="reports-section" class="spa-section" style="display:none;">
+            <div class="container">
+                <div class="header">
+                    <div class="header-icon">
+                        <i class="fas fa-file-pdf"></i>
+                    </div>
+                    <h1>Reports</h1>
+                    <p class="subtitle">Download your income and expense reports as PDF</p>
+                </div>
+                <div class="form-section" style="display: flex; gap: 2rem; justify-content: center; margin-top: 2rem;">
+                    <button id="download-income-pdf" class="add-btn income-btn"><i class="fas fa-download"></i> Income Report (PDF)</button>
+                    <button id="download-expense-pdf" class="add-btn expense-btn"><i class="fas fa-download"></i> Expense Report (PDF)</button>
+                </div>
+            </div>
+        </section>
+    </main>
+    <script src="app.js"></script>
+</body>
+</html> 

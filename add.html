@@ -1,0 +1,57 @@
+<nav class="navbar">
+    <a href="dashboard.html" class="nav-link"><i class="fas fa-chart-bar"></i> Dashboard</a>
+    <a href="add.html" class="nav-link active"><i class="fas fa-plus"></i> Add Transaction</a>
+    <a href="history.html" class="nav-link"><i class="fas fa-list"></i> History</a>
+</nav>
+<form id="income-form" class="transaction-form" style="display:none;">
+    <div class="form-grid">
+        <div class="form-group">
+            <label for="income-text">Description</label>
+            <input type="text" id="income-text" placeholder="Enter income description" required>
+        </div>
+        <div class="form-group">
+            <label for="income-amount">Amount</label>
+            <div class="input-currency-row">
+                <input type="number" id="income-amount" step="0.01" min="0.01" placeholder="Enter amount (positive)" required>
+                <select id="income-currency" class="currency-select-inline">
+                    <option value="USD">$ USD</option>
+                    <option value="EUR">€ EUR</option>
+                    <option value="GBP">£ GBP</option>
+                    <option value="INR">₹ INR</option>
+                    <option value="JPY">¥ JPY</option>
+                    <option value="CAD">$ CAD</option>
+                    <option value="AUD">$ AUD</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <button type="submit" class="add-btn income-btn">
+        <i class="fas fa-plus"></i> Add Income
+    </button>
+</form>
+<form id="expense-form" class="transaction-form" style="display:none;">
+    <div class="form-grid">
+        <div class="form-group">
+            <label for="expense-text">Description</label>
+            <input type="text" id="expense-text" placeholder="Enter expense description" required>
+        </div>
+        <div class="form-group">
+            <label for="expense-amount">Amount</label>
+            <div class="input-currency-row">
+                <input type="number" id="expense-amount" step="0.01" min="0.01" placeholder="Enter amount (positive)" required>
+                <select id="expense-currency" class="currency-select-inline">
+                    <option value="USD">$ USD</option>
+                    <option value="EUR">€ EUR</option>
+                    <option value="GBP">£ GBP</option>
+                    <option value="INR">₹ INR</option>
+                    <option value="JPY">¥ JPY</option>
+                    <option value="CAD">$ CAD</option>
+                    <option value="AUD">$ AUD</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <button type="submit" class="add-btn expense-btn">
+        <i class="fas fa-minus"></i> Add Expense
+    </button>
+</form> 
