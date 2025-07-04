@@ -6,11 +6,13 @@ const sections = {
     history: document.getElementById('history-section'),
     register: document.getElementById('register-section'),
     reset: document.getElementById('reset-section'),
+    reports: document.getElementById('reports-section'),
 };
 const navLinks = {
     dashboard: document.getElementById('nav-dashboard'),
     add: document.getElementById('nav-add'),
     history: document.getElementById('nav-history'),
+    reports: document.getElementById('nav-reports'),
 };
 
 // User Profile
@@ -101,6 +103,8 @@ function render() {
         renderTransactions();
     } else if (page === 'add') {
         // nothing extra needed
+    } else if (page === 'reports') {
+        // nothing extra needed
     }
     // Fallback: If no section is visible, force show correct section
     setTimeout(() => {
@@ -139,7 +143,7 @@ if (loginForm) {
 
 // Budget Logic
 const currencySymbols = {
-    USD: '$', EUR: '€', GBP: '£', INR: '₹', JPY: '¥', CAD: '$', AUD: '$'
+    USD: '$', EUR: '€', GBP: '£', INR: '₹', JPY: '¥', CAD: '$', AUD: '$', LKR: 'Rs.'
 };
 function getTransactions() {
     return JSON.parse(localStorage.getItem('budget-transactions')) || [];
@@ -148,7 +152,7 @@ function saveTransactions(transactions) {
     localStorage.setItem('budget-transactions', JSON.stringify(transactions));
 }
 function getLastCurrency() {
-    return localStorage.getItem('budget-last-currency') || 'USD';
+    return localStorage.getItem('budget-last-currency') || 'LKR';
 }
 function setLastCurrency(value) {
     localStorage.setItem('budget-last-currency', value);
@@ -246,10 +250,10 @@ function renderBarChart() {
                 borderColor: data.map(a => a < 0 ? 'rgba(239, 68, 68, 1)' : 'rgba(16, 185, 129, 1)'),
                 borderWidth: 0,
                 borderRadius: 6,
-                maxBarThickness: 40,
+                maxBarThickness: 60,
                 borderSkipped: false,
-                barPercentage: 0.7,
-                categoryPercentage: 0.7
+                barPercentage: 0.9,
+                categoryPercentage: 0.9
             }]
         },
         options: {
@@ -614,30 +618,85 @@ else setDarkMode(false);
 render();
 
 // PDF Report Generation
+function getReportDateRange() {
+    const start = document.getElementById('report-start-date').value;
+    const end = document.getElementById('report-end-date').value;
+    return {
+        start: start ? new Date(start) : null,
+        end: end ? new Date(end + 'T23:59:59') : null
+    };
+}
+function filterByDate(transactions, start, end) {
+    return transactions.filter(t => {
+        const d = new Date(t.date);
+        if (start && d < start) return false;
+        if (end && d > end) return false;
+        return true;
+    });
+}
+function addPdfBranding(doc, color) {
+    // Add logo (default icon) and app name
+    // You can replace this with your own logo as a data URL
+    const logo = 'data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjNjM2NmYxIiB2aWV3Qm94PSIwIDAgMjQgMjQiIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgMThjLTQuNDIgMC04LTMuNTgtOC04czMuNTgtOCA4LTggOCAzLjU4IDggOC0zLjU4IDgtOCA4eiIvPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjQiLz48L3N2Zz4=';
+    doc.addImage(logo, 'PNG', 14, 8, 10, 10);
+    doc.setFontSize(16);
+    doc.setTextColor(...color);
+    doc.text('Modern Budget Tracker', 26, 16);
+}
 function generatePDFReport(type) {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     const all = getTransactions();
-    const filtered = all.filter(t => (type === 'income' ? t.amount > 0 : t.amount < 0));
-    const title = type === 'income' ? 'Income Report' : 'Expense Report';
-    const color = type === 'income' ? [34, 197, 94] : [239, 68, 68];
+    const { start, end } = getReportDateRange();
+    let filtered;
+    let title;
+    let color;
+    if (type === 'income') {
+        filtered = all.filter(t => t.amount > 0);
+        title = 'Income Report';
+        color = [34, 197, 94];
+    } else if (type === 'expense') {
+        filtered = all.filter(t => t.amount < 0);
+        title = 'Expense Report';
+        color = [239, 68, 68];
+    } else {
+        filtered = all;
+        title = 'Combined Report';
+        color = [99, 102, 241];
+    }
+    filtered = filterByDate(filtered, start, end);
+    addPdfBranding(doc, color);
     doc.setFontSize(18);
     doc.setTextColor(...color);
-    doc.text(title, 14, 18);
+    doc.text(title, 14, 28);
     doc.setFontSize(12);
     doc.setTextColor(60,60,60);
-    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 26);
-    const tableData = filtered.map(t => [
-        new Date(t.date).toLocaleDateString(),
-        t.text,
-        `${currencySymbols[t.currency] || '$'}${Math.abs(t.amount).toFixed(2)}`,
-        t.currency || 'USD'
-    ]);
-    const total = filtered.reduce((acc, t) => acc + Math.abs(t.amount), 0);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 34);
+    let tableData, head;
+    if (type === 'combined') {
+        head = [['Date', 'Description', 'Type', 'Amount', 'Currency']];
+        tableData = filtered.map(t => [
+            new Date(t.date).toLocaleDateString(),
+            t.text,
+            t.amount > 0 ? 'Income' : 'Expense',
+            `${currencySymbols[t.currency] || '$'}${Math.abs(t.amount).toFixed(2)}`,
+            t.currency || 'USD'
+        ]);
+    } else {
+        head = [['Date', 'Description', 'Amount', 'Currency']];
+        tableData = filtered.map(t => [
+            new Date(t.date).toLocaleDateString(),
+            t.text,
+            `${currencySymbols[t.currency] || '$'}${Math.abs(t.amount).toFixed(2)}`,
+            t.currency || 'USD'
+        ]);
+    }
+    const totalIncome = filtered.filter(t => t.amount > 0).reduce((acc, t) => acc + Math.abs(t.amount), 0);
+    const totalExpense = filtered.filter(t => t.amount < 0).reduce((acc, t) => acc + Math.abs(t.amount), 0);
     window.jspdfAutoTable.default(doc, {
-        head: [['Date', 'Description', 'Amount', 'Currency']],
+        head: head,
         body: tableData,
-        startY: 32,
+        startY: 40,
         theme: 'grid',
         headStyles: { fillColor: color, textColor: 255 },
         bodyStyles: { textColor: 30 },
@@ -645,12 +704,48 @@ function generatePDFReport(type) {
         didDrawPage: function (data) {
             doc.setFontSize(13);
             doc.setTextColor(...color);
-            doc.text(`Total: ${(currencySymbols[filtered[0]?.currency] || '$')}${total.toFixed(2)}`, 14, doc.lastAutoTable.finalY + 10);
+            let y = doc.lastAutoTable.finalY + 10;
+            if (type === 'combined') {
+                doc.text(`Total Income: $${totalIncome.toFixed(2)}`, 14, y);
+                doc.text(`Total Expense: $${totalExpense.toFixed(2)}`, 80, y);
+            } else if (type === 'income') {
+                doc.text(`Total: $${totalIncome.toFixed(2)}`, 14, y);
+            } else if (type === 'expense') {
+                doc.text(`Total: $${totalExpense.toFixed(2)}`, 14, y);
+            }
         }
     });
     doc.save(`${title.replace(' ', '_')}_${new Date().toISOString().slice(0,10)}.pdf`);
+    showToast('Report downloaded successfully!', 'success');
 }
 const incomePdfBtn = document.getElementById('download-income-pdf');
 const expensePdfBtn = document.getElementById('download-expense-pdf');
+const combinedPdfBtn = document.getElementById('download-combined-pdf');
 if (incomePdfBtn) incomePdfBtn.onclick = () => generatePDFReport('income');
-if (expensePdfBtn) expensePdfBtn.onclick = () => generatePDFReport('expense'); 
+if (expensePdfBtn) expensePdfBtn.onclick = () => generatePDFReport('expense');
+if (combinedPdfBtn) combinedPdfBtn.onclick = () => generatePDFReport('combined');
+
+// Report Modal Logic
+const reportModal = document.getElementById('report-modal');
+const openReportBtn = document.getElementById('generate-report-btn');
+const closeReportBtn = document.getElementById('close-report-modal');
+if (openReportBtn && reportModal) {
+    openReportBtn.onclick = () => {
+        reportModal.style.display = 'flex';
+        // Attach listeners every time modal is opened
+        const incomePdfBtn = document.getElementById('download-income-pdf');
+        const expensePdfBtn = document.getElementById('download-expense-pdf');
+        const combinedPdfBtn = document.getElementById('download-combined-pdf');
+        if (incomePdfBtn) incomePdfBtn.onclick = () => generatePDFReport('income');
+        if (expensePdfBtn) expensePdfBtn.onclick = () => generatePDFReport('expense');
+        if (combinedPdfBtn) combinedPdfBtn.onclick = () => generatePDFReport('combined');
+    };
+}
+if (closeReportBtn && reportModal) {
+    closeReportBtn.onclick = () => { reportModal.style.display = 'none'; };
+}
+window.onclick = function(event) {
+    if (event.target === reportModal) {
+        reportModal.style.display = 'none';
+    }
+}; 

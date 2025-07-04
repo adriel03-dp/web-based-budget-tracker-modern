@@ -272,12 +272,12 @@ body {
 }
 .card-header h4 {
     margin: 0;
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 600;
     color: #444;
 }
 .card-value {
-    font-size: 2rem;
+    font-size: 1.3rem;
     font-weight: 700;
     margin-top: 0.2rem;
     color: #222;
@@ -315,6 +315,8 @@ body {
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
     margin: 0 auto;
     max-width: 100%;
+    height: 320px !important;
+    max-height: 400px;
 }
 
 /* Summary Cards */
@@ -338,7 +340,7 @@ body {
     margin-bottom: 10px;
 }
 .summary-header h4 { font-size: 1rem; color: #374151;}
-.summary-amount { font-size: 1.5rem; font-weight: bold;}
+.summary-amount { font-size: 1rem; font-weight: 600; margin: 0;}
 .income-summary .summary-amount { color: #10b981;}
 .expense-summary .summary-amount { color: #ef4444;}
 .net-balance {
@@ -494,10 +496,20 @@ body {
 .transaction-item.plus { background: #f0fdf4; border-left-color: #10b981;}
 .transaction-item.minus { background: #fef2f2; border-left-color: #ef4444;}
 .transaction-details { flex: 1; }
-.transaction-description { font-weight: 600; color: #374151; margin-bottom: 5px;}
-.transaction-date { font-size: 0.8rem; color: #6b7280;}
+.transaction-description {
+    font-weight: 600;
+    color: #222;
+    font-size: 1rem;
+}
+.transaction-date {
+    font-size: 0.92rem;
+    color: #888;
+}
 .transaction-amount { display: flex; align-items: center; gap: 10px;}
-.amount-value { font-size: 1.1rem; font-weight: bold;}
+.amount-value {
+    font-size: 1rem;
+    font-weight: 600;
+}
 .amount-value.plus { color: #10b981;}
 .amount-value.minus { color: #ef4444;}
 .delete-btn {
@@ -658,10 +670,11 @@ body {
 .spa-section {
     display: none;
     width: 100%;
-    min-height: 80vh;
+    min-height: calc(100vh - 60px);
     align-items: center;
     justify-content: center;
-    padding: 2rem 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 .spa-section.active {
     display: flex !important;
@@ -741,6 +754,7 @@ body {
     flex-direction: column;
     align-items: center;
     padding: 0 1rem 2rem 1rem;
+    min-height: calc(100vh - 100px);
 }
 .dashboard-header {
     text-align: center;
@@ -787,12 +801,12 @@ body {
 }
 .card-header h4 {
     margin: 0;
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 600;
     color: #444;
 }
 .card-value {
-    font-size: 2rem;
+    font-size: 1.3rem;
     font-weight: 700;
     margin-top: 0.2rem;
     color: #222;
@@ -820,6 +834,8 @@ body {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
+    min-height: 380px;
+    padding-bottom: 1.5rem;
 }
 .summary-section {
     background: var(--card-bg);
@@ -855,7 +871,7 @@ body {
     margin-bottom: 0.5rem;
 }
 .summary-amount {
-    font-size: 1.2rem;
+    font-size: 1rem;
     font-weight: 600;
     margin: 0;
 }
@@ -882,6 +898,8 @@ body {
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
     margin: 0 auto;
     max-width: 100%;
+    height: 320px !important;
+    max-height: 400px;
 }
 @media (max-width: 900px) {
     .dashboard-charts-row {
@@ -1035,9 +1053,10 @@ body {
 .transaction-description {
     font-weight: 600;
     color: #222;
+    font-size: 1rem;
 }
 .transaction-date {
-    font-size: 0.95rem;
+    font-size: 0.92rem;
     color: #888;
 }
 .transaction-amount {
@@ -1046,7 +1065,7 @@ body {
     gap: 0.7rem;
 }
 .amount-value {
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 600;
 }
 .amount-value.plus { color: var(--success); }
@@ -1076,7 +1095,7 @@ body {
 
 /* Dark mode styles */
 body.dark-mode {
-    background: linear-gradient(135deg, #232946 0%, #121629 100%);
+    background: #181a2a;
     --bg: #181a2a;
     --card-bg: #232946;
     --card-bg-gradient: linear-gradient(135deg, #232946 60%, #35377a 100%);
@@ -1181,4 +1200,45 @@ body.dark-mode #dark-mode-toggle:hover {
 }
 #dark-mode-toggle:focus {
     outline: 2px solid var(--accent);
+}
+
+.modal {
+    display: flex;
+    position: fixed;
+    z-index: 1001;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: auto;
+    background: rgba(0,0,0,0.35);
+    align-items: center;
+    justify-content: center;
+}
+.modal-content {
+    background: var(--card-bg);
+    color: var(--text);
+    margin: auto;
+    padding: 2rem 2.5rem 2rem 2.5rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    min-width: 320px;
+    max-width: 95vw;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.close {
+    position: absolute;
+    top: 1rem;
+    right: 1.5rem;
+    color: #888;
+    font-size: 2rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.close:hover {
+    color: var(--danger);
 } 
