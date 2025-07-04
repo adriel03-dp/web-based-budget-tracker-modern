@@ -16,6 +16,7 @@
         <a href="#add" class="nav-link" id="nav-add"><i class="fas fa-plus"></i> Add Transaction</a>
         <a href="#history" class="nav-link" id="nav-history"><i class="fas fa-list"></i> History</a>
         <a href="#reports" class="nav-link" id="nav-reports"><i class="fas fa-file-pdf"></i> Reports</a>
+        <a href="#profile" class="nav-link" id="nav-profile"><i class="fas fa-user"></i> Profile</a>
         <button id="dark-mode-toggle" title="Toggle dark mode"><i class="fas fa-moon"></i></button>
         <!-- User profile will be injected here by JS -->
     </nav>
@@ -180,6 +181,19 @@
                                     </select>
                                 </div>
                             </div>
+                            <div class="form-group">
+                                <label for="income-category">Category</label>
+                                <select id="income-category" required>
+                                    <option value="Salary">Salary</option>
+                                    <option value="Business">Business</option>
+                                    <option value="Gift">Gift</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="income-tags">Tags</label>
+                                <input type="text" id="income-tags" placeholder="Comma-separated tags (optional)">
+                            </div>
                         </div>
                         <button type="submit" class="add-btn income-btn">
                             <i class="fas fa-plus"></i> Add Income
@@ -206,6 +220,21 @@
                                         <option value="AUD">$ AUD</option>
                                     </select>
                                 </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="expense-category">Category</label>
+                                <select id="expense-category" required>
+                                    <option value="Food">Food</option>
+                                    <option value="Transport">Transport</option>
+                                    <option value="Shopping">Shopping</option>
+                                    <option value="Bills">Bills</option>
+                                    <option value="Health">Health</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="expense-tags">Tags</label>
+                                <input type="text" id="expense-tags" placeholder="Comma-separated tags (optional)">
                             </div>
                         </div>
                         <button type="submit" class="add-btn expense-btn">
@@ -250,6 +279,27 @@
                         <button id="generate-report-btn" class="add-btn"><i class="fas fa-file-alt"></i> Generate Report</button>
                     </div>
                 </div>
+            </div>
+        </section>
+        <!-- Profile Section -->
+        <section id="profile-section" class="spa-section" style="display:none;">
+            <div class="container">
+                <div class="header">
+                    <div class="header-icon">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <h1>Edit Profile</h1>
+                    <p class="subtitle">Update your username and password</p>
+                </div>
+                <form id="profile-form" class="login-form" style="max-width: 350px; margin: 0 auto;">
+                    <label for="profile-username">Username</label>
+                    <input type="text" id="profile-username" required>
+                    <label for="profile-password">New Password</label>
+                    <input type="password" id="profile-password" placeholder="Leave blank to keep current password">
+                    <label for="profile-confirm">Confirm New Password</label>
+                    <input type="password" id="profile-confirm" placeholder="Leave blank to keep current password">
+                    <button type="submit" class="login-btn">Save Changes</button>
+                </form>
             </div>
         </section>
     </main>

@@ -7,12 +7,14 @@ const sections = {
     register: document.getElementById('register-section'),
     reset: document.getElementById('reset-section'),
     reports: document.getElementById('reports-section'),
+    profile: document.getElementById('profile-section'),
 };
 const navLinks = {
     dashboard: document.getElementById('nav-dashboard'),
     add: document.getElementById('nav-add'),
     history: document.getElementById('nav-history'),
     reports: document.getElementById('nav-reports'),
+    profile: document.getElementById('nav-profile'),
 };
 
 // User Profile
@@ -105,6 +107,15 @@ function render() {
         // nothing extra needed
     } else if (page === 'reports') {
         // nothing extra needed
+    } else if (page === 'profile') {
+        // Prefill profile form
+        const user = getUser();
+        const profileForm = document.getElementById('profile-form');
+        if (profileForm && user) {
+            document.getElementById('profile-username').value = user.username;
+            document.getElementById('profile-password').value = '';
+            document.getElementById('profile-confirm').value = '';
+        }
     }
     // Fallback: If no section is visible, force show correct section
     setTimeout(() => {
@@ -233,7 +244,7 @@ function renderBarChart() {
     // Detect dark mode
     const isDark = document.body.classList.contains('dark-mode');
     const chartBg = isDark ? '#232946' : '#fff';
-    const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
+    const gridColor = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)';
     const fontColor = isDark ? '#f4f4f4' : '#374151';
     const tooltipBg = isDark ? '#232946' : '#fff';
     const tooltipBorder = isDark ? '#35377a' : '#e5e7eb';
@@ -279,6 +290,10 @@ function renderBarChart() {
                             return `Amount: ${(currencySymbols[t.currency] || '$')}${Math.abs(context.parsed.y).toFixed(2)}`;
                         }
                     }
+                },
+                // Set chart area background
+                chartAreaBackground: {
+                    color: chartBg
                 }
             },
             scales: {
@@ -301,7 +316,18 @@ function renderBarChart() {
                     }
                 }
             }
-        }
+        },
+        plugins: [{
+            id: 'chartAreaBackground',
+            beforeDraw: (chart) => {
+                const ctx = chart.ctx;
+                ctx.save();
+                ctx.globalCompositeOperation = 'destination-over';
+                ctx.fillStyle = chartBg;
+                ctx.fillRect(0, 0, chart.width, chart.height);
+                ctx.restore();
+            }
+        }]
     });
 }
 
@@ -353,12 +379,16 @@ incomeForm.addEventListener('submit', function(e) {
     }
     const currency = incomeCurrency.value;
     setLastCurrency(currency);
+    const category = document.getElementById('income-category').value;
+    const tags = document.getElementById('income-tags').value.split(',').map(t => t.trim()).filter(Boolean);
     const transaction = {
         id: Date.now(),
         text: incomeText.value.trim(),
         amount: amountNum,
         currency,
-        date: new Date().toISOString()
+        date: new Date().toISOString(),
+        category,
+        tags
     };
     const transactions = getTransactions();
     transactions.unshift(transaction);
@@ -384,12 +414,16 @@ expenseForm.addEventListener('submit', function(e) {
     }
     const currency = expenseCurrency.value;
     setLastCurrency(currency);
+    const category = document.getElementById('expense-category').value;
+    const tags = document.getElementById('expense-tags').value.split(',').map(t => t.trim()).filter(Boolean);
     const transaction = {
         id: Date.now(),
         text: expenseText.value.trim(),
         amount: -amountNum,
         currency,
-        date: new Date().toISOString()
+        date: new Date().toISOString(),
+        category,
+        tags
     };
     const transactions = getTransactions();
     transactions.unshift(transaction);
@@ -426,9 +460,11 @@ function addTransactionDOM(transaction, index) {
     item.classList.add('transaction-item');
     item.classList.add(transaction.amount < 0 ? 'minus' : 'plus');
     const date = new Date(transaction.date || Date.now()).toLocaleDateString();
+    const category = transaction.category ? `<span class="category-badge">${transaction.category}</span>` : '';
+    const tags = (transaction.tags && transaction.tags.length) ? `<span class="tags-badge">${transaction.tags.map(t => `<span class='tag'>${t}</span>`).join(' ')}</span>` : '';
     item.innerHTML = `
         <div class="transaction-details">
-            <div class="transaction-description">${transaction.text}</div>
+            <div class="transaction-description">${transaction.text} ${category} ${tags}</div>
             <div class="transaction-date">${date}</div>
         </div>
         <div class="transaction-amount">
@@ -635,15 +671,13 @@ function filterByDate(transactions, start, end) {
     });
 }
 function addPdfBranding(doc, color) {
-    // Add logo (default icon) and app name
-    // You can replace this with your own logo as a data URL
-    const logo = 'data:image/svg+xml;base64,PHN2ZyBmaWxsPSIjNjM2NmYxIiB2aWV3Qm94PSIwIDAgMjQgMjQiIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgMThjLTQuNDIgMC04LTMuNTgtOC04czMuNTgtOCA4LTggOCAzLjU4IDggOC0zLjU4IDgtOCA4eiIvPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjQiLz48L3N2Zz4=';
-    doc.addImage(logo, 'PNG', 14, 8, 10, 10);
+    // Only add app name as branding, no image
     doc.setFontSize(16);
     doc.setTextColor(...color);
     doc.text('Modern Budget Tracker', 26, 16);
 }
 function generatePDFReport(type) {
+    console.log('generatePDFReport called with type:', type);
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     const all = getTransactions();
@@ -693,27 +727,29 @@ function generatePDFReport(type) {
     }
     const totalIncome = filtered.filter(t => t.amount > 0).reduce((acc, t) => acc + Math.abs(t.amount), 0);
     const totalExpense = filtered.filter(t => t.amount < 0).reduce((acc, t) => acc + Math.abs(t.amount), 0);
-    window.jspdfAutoTable.default(doc, {
+    // Add totals above the table
+    let summaryY = 40;
+    doc.setFontSize(13);
+    doc.setTextColor(...color);
+    if (type === 'combined') {
+        doc.text(`Total Income: ${(currencySymbols[filtered[0]?.currency] || '$')}${totalIncome.toFixed(2)}`, 14, summaryY);
+        doc.text(`Total Expense: ${(currencySymbols[filtered[0]?.currency] || '$')}${totalExpense.toFixed(2)}`, 80, summaryY);
+        summaryY += 8;
+    } else if (type === 'income') {
+        doc.text(`Total: ${(currencySymbols[filtered[0]?.currency] || '$')}${totalIncome.toFixed(2)}`, 14, summaryY);
+        summaryY += 8;
+    } else if (type === 'expense') {
+        doc.text(`Total: ${(currencySymbols[filtered[0]?.currency] || '$')}${totalExpense.toFixed(2)}`, 14, summaryY);
+        summaryY += 8;
+    }
+    doc.autoTable({
         head: head,
         body: tableData,
-        startY: 40,
+        startY: summaryY,
         theme: 'grid',
         headStyles: { fillColor: color, textColor: 255 },
         bodyStyles: { textColor: 30 },
-        styles: { fontSize: 11, cellPadding: 2 },
-        didDrawPage: function (data) {
-            doc.setFontSize(13);
-            doc.setTextColor(...color);
-            let y = doc.lastAutoTable.finalY + 10;
-            if (type === 'combined') {
-                doc.text(`Total Income: $${totalIncome.toFixed(2)}`, 14, y);
-                doc.text(`Total Expense: $${totalExpense.toFixed(2)}`, 80, y);
-            } else if (type === 'income') {
-                doc.text(`Total: $${totalIncome.toFixed(2)}`, 14, y);
-            } else if (type === 'expense') {
-                doc.text(`Total: $${totalExpense.toFixed(2)}`, 14, y);
-            }
-        }
+        styles: { fontSize: 11, cellPadding: 2 }
     });
     doc.save(`${title.replace(' ', '_')}_${new Date().toISOString().slice(0,10)}.pdf`);
     showToast('Report downloaded successfully!', 'success');
@@ -721,9 +757,9 @@ function generatePDFReport(type) {
 const incomePdfBtn = document.getElementById('download-income-pdf');
 const expensePdfBtn = document.getElementById('download-expense-pdf');
 const combinedPdfBtn = document.getElementById('download-combined-pdf');
-if (incomePdfBtn) incomePdfBtn.onclick = () => generatePDFReport('income');
-if (expensePdfBtn) expensePdfBtn.onclick = () => generatePDFReport('expense');
-if (combinedPdfBtn) combinedPdfBtn.onclick = () => generatePDFReport('combined');
+if (incomePdfBtn) incomePdfBtn.onclick = () => { console.log('Income PDF button clicked'); generatePDFReport('income'); };
+if (expensePdfBtn) expensePdfBtn.onclick = () => { console.log('Expense PDF button clicked'); generatePDFReport('expense'); };
+if (combinedPdfBtn) combinedPdfBtn.onclick = () => { console.log('Combined PDF button clicked'); generatePDFReport('combined'); };
 
 // Report Modal Logic
 const reportModal = document.getElementById('report-modal');
@@ -732,13 +768,21 @@ const closeReportBtn = document.getElementById('close-report-modal');
 if (openReportBtn && reportModal) {
     openReportBtn.onclick = () => {
         reportModal.style.display = 'flex';
-        // Attach listeners every time modal is opened
+        // Remove previous listeners by replacing buttons with clones
+        ['download-income-pdf', 'download-expense-pdf', 'download-combined-pdf'].forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                const newBtn = btn.cloneNode(true);
+                btn.replaceWith(newBtn);
+            }
+        });
+        // Attach listeners
         const incomePdfBtn = document.getElementById('download-income-pdf');
         const expensePdfBtn = document.getElementById('download-expense-pdf');
         const combinedPdfBtn = document.getElementById('download-combined-pdf');
-        if (incomePdfBtn) incomePdfBtn.onclick = () => generatePDFReport('income');
-        if (expensePdfBtn) expensePdfBtn.onclick = () => generatePDFReport('expense');
-        if (combinedPdfBtn) combinedPdfBtn.onclick = () => generatePDFReport('combined');
+        if (incomePdfBtn) incomePdfBtn.onclick = () => { console.log('Income PDF button clicked'); generatePDFReport('income'); };
+        if (expensePdfBtn) expensePdfBtn.onclick = () => { console.log('Expense PDF button clicked'); generatePDFReport('expense'); };
+        if (combinedPdfBtn) combinedPdfBtn.onclick = () => { console.log('Combined PDF button clicked'); generatePDFReport('combined'); };
     };
 }
 if (closeReportBtn && reportModal) {
@@ -748,4 +792,42 @@ window.onclick = function(event) {
     if (event.target === reportModal) {
         reportModal.style.display = 'none';
     }
-}; 
+};
+
+// Profile form logic
+const profileForm = document.getElementById('profile-form');
+if (profileForm) {
+    profileForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const username = document.getElementById('profile-username').value.trim();
+        const password = document.getElementById('profile-password').value;
+        const confirm = document.getElementById('profile-confirm').value;
+        if (!username) {
+            showToast('Username cannot be empty', 'error');
+            return;
+        }
+        if (password && password !== confirm) {
+            showToast('Passwords do not match', 'error');
+            return;
+        }
+        // Update user in localStorage
+        let users = getUsers();
+        let user = getUser();
+        // Check for username conflict
+        if (username !== user.username && users.some(u => u.username === username)) {
+            showToast('Username already exists', 'error');
+            return;
+        }
+        // Update user in users array
+        users = users.map(u => {
+            if (u.username === user.username) {
+                return { username, password: password ? password : u.password };
+            }
+            return u;
+        });
+        saveUsers(users);
+        setUser({ username });
+        showToast('Profile updated successfully!', 'success');
+        render();
+    });
+} 

@@ -1241,4 +1241,38 @@ body.dark-mode #dark-mode-toggle:hover {
 }
 .close:hover {
     color: var(--danger);
+}
+
+.category-badge {
+    display: inline-block;
+    background: #e0e7ff;
+    color: #4338ca;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-radius: 8px;
+    padding: 0.1rem 0.5rem;
+    margin-left: 0.5rem;
+    margin-right: 0.2rem;
+}
+.tags-badge {
+    display: inline-block;
+    margin-left: 0.2rem;
+}
+.tag {
+    display: inline-block;
+    background: #f3f4f6;
+    color: #6366f1;
+    font-size: 0.8rem;
+    border-radius: 6px;
+    padding: 0.08rem 0.4rem;
+    margin-right: 0.15rem;
+    margin-left: 0.1rem;
+}
+body.dark-mode .category-badge {
+    background: #35377a;
+    color: #a5b4fc;
+}
+body.dark-mode .tag {
+    background: #232946;
+    color: #a5b4fc;
 } 
